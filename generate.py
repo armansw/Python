@@ -1,7 +1,7 @@
 from train import train
 from random import uniform
 
-def unirand(seq):
+def unirand(seq): #Возвращаем случайное слово после данного слова.Слово случайным образом выбирается из списка слов с ненулевой вероятностью
     sum_, freq_ = 0, 0
     for item, freq in seq:
         sum_ += freq
@@ -13,7 +13,7 @@ def unirand(seq):
 
 
 
-def generate_sentence(model):
+def generate_sentence(model): #Генерирует модель
     phrase = ''
     t0, t1 = '$', '$'
     while 1:
