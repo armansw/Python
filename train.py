@@ -3,15 +3,19 @@ import argparse
 import sys
 import re
 import pickle
+import glob
 from collections import defaultdict
 
 List = []
 r_alphabet = re.compile(u'[а-яА-Я0-9-]+|[.,:;?!]+')
 
 
-def gen_lines(corpus):  # Приводим к нижнему регистру
+def gen_lines(corpus, lc):  # Приводим к нижнему регистру
     for line in corpus:
-        yield line.lower()
+        if lc:
+            yield line.lower()
+        else:
+            yield line
 
 
 def gen_tokens(lines):  # Очищаем текст от ненужных слов и символов
@@ -32,8 +36,8 @@ def gen_trigrams(tokens):  # Генератор, который выдаёт 3 �
             t0, t1 = t1, t2
 
 
-def train(corpus):  # Получает входную директорию,берёт все текстовые файлы из директории и строит модель
-    lines = gen_lines(corpus)
+def train(corpus, lc):  # Получает входную директорию,берёт все текстовые файлы из директории и строит модель
+    lines = gen_lines(corpus, lc)
     tokens = gen_tokens(lines)
     trigrams = gen_trigrams(tokens)
     bi, tri = defaultdict(lambda: 0.0), defaultdict(lambda: 0.0)
@@ -53,26 +57,31 @@ def train(corpus):  # Получает входную директорию,бе�
 
 if (__name__ == "__main__"):  # Консольный интерфейс с использованием библиотеки argparse
     parser = argparse.ArgumentParser(description='Generate text model.')
-    parser.add_argument(
+    parser.add_argument(  # Описание команды ввода директорий
         '--input-dir',
         dest='input_dir',
         type=str,
         default="",
         help='input files dir (default: stdin)')
-    parser.add_argument(
+    parser.add_argument(  # Описание команды lc,чтобы видеть все файлы в директорий и взять только файлы формата .txt
+        '--lc',
+        dest='lc',
+        action='store_true',
+        help='make whole text lowercase')
+
+    requiredNamed = parser.add_argument_group('required arguments')
+    requiredNamed.add_argument(
         '--model',
         dest='model',
-        type=argparse.FileType('w'),
-        default=sys.stdout,
-        help='output model (default: stdout)')
-    parser.add_argument(
-        '--lc', dest='lc', type=None, help='make whole text lowercase')
+        type=argparse.FileType('wb'),
+        help='output file',
+        required=True)
     args = parser.parse_args()
     if not args.input_dir:  # Если нет во входе директории то вводим с клавиатуры
-        print(train(sys.stdin))
+        args.model.write(pickle.dumps(train(sys.stdin)))
     else:
         os.chdir(args.input_dir)  # В обратном случае читаем директорию и берём все текстовые файлы оттуда
-        os.system('cat ' + ' '.join(glob.glob('*.txt')) +
-                  ' > /tmp/generated_text.txt')
+        cmd = 'cat ' + ' '.join(
+            glob.glob('*.txt')) + ' > /tmp/generated_text.txt'
         mfl = open('/tmp/generated_text.txt', 'r')
-        args.model.write(pickle.dunps(train(mfl)))
+        args.model.write(pickle.dumps(train(mfl, args.lc)))
