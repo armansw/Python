@@ -84,4 +84,6 @@ if (__name__ == "__main__"):  # Консольный интерфейс с ис�
         cmd = 'cat ' + ' '.join(
             glob.glob('*.txt')) + ' > /tmp/generated_text.txt'
         mfl = open('/tmp/generated_text.txt', 'r')
+        
+        # плохая идея, используй os.listdir и проходи по всем файлам
         args.model.write(pickle.dumps(train(mfl, args.lc)))
