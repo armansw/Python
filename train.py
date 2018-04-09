@@ -24,7 +24,8 @@ def gen_tokens(lines):  # Очищаем текст от ненужных сло
             yield token
 
 
-def gen_trigrams(tokens):  # Генератор, который выдаёт 3 друг за другом идущие слова
+def gen_trigrams(
+        tokens):  # Генератор, который выдаёт 3 друг за другом идущие слова
     t0, t1 = '$', '$'
     for t2 in tokens:
         yield t0, t1, t2
@@ -36,7 +37,9 @@ def gen_trigrams(tokens):  # Генератор, который выдаёт 3 �
             t0, t1 = t1, t2
 
 
-def train(corpus, lc):  # Получает входную директорию,берёт все текстовые файлы из директории и строит модель
+def train(
+        corpus, lc, model={}
+):  # Получает входную директорию,берёт все текстовые файлы из директории и строит модель
     lines = gen_lines(corpus, lc)
     tokens = gen_tokens(lines)
     trigrams = gen_trigrams(tokens)
@@ -46,7 +49,6 @@ def train(corpus, lc):  # Получает входную директорию,�
         bi[t0, t1] += 1
         tri[t0, t1, t2] += 1
 
-    model = {}
     for (t0, t1, t2), freq in tri.items():
         if (t0, t1) in model:
             model[t0, t1].append((t2, freq / bi[t0, t1]))
@@ -55,7 +57,8 @@ def train(corpus, lc):  # Получает входную директорию,�
     return model
 
 
-if (__name__ == "__main__"):  # Консольный интерфейс с использованием библиотеки argparse
+if (__name__ == "__main__"
+    ):  # Консольный интерфейс с использованием библиотеки argparse
     parser = argparse.ArgumentParser(description='Generate text model.')
     parser.add_argument(  # Описание команды ввода директорий
         '--input-dir',
@@ -78,12 +81,11 @@ if (__name__ == "__main__"):  # Консольный интерфейс с ис�
         required=True)
     args = parser.parse_args()
     if not args.input_dir:  # Если нет во входе директории то вводим с клавиатуры
-        args.model.write(pickle.dumps(train(sys.stdin)))
-    else:
-        os.chdir(args.input_dir)  # В обратном случае читаем директорию и берём все текстовые файлы оттуда
-        cmd = 'cat ' + ' '.join(
-            glob.glob('*.txt')) + ' > /tmp/generated_text.txt'
-        mfl = open('/tmp/generated_text.txt', 'r')
-        
-        # плохая идея, используй os.listdir и проходи по всем файлам
-        args.model.write(pickle.dumps(train(mfl, args.lc)))
+        args.model.write(pickle.dumps(train(sys.stdin, args.lc)))
+    else:  #Иначе, читаем из директории
+        model = {}
+        for mfile in os.listdir(args.input_dir):
+            mfl = open(mfile)
+            train(mfl, args.lc, model)
+            mfl.close()
+        args.model.write(pickle.dumps(model))
