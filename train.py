@@ -85,7 +85,7 @@ if (__name__ == "__main__"
     else:  #Иначе, читаем из директории
         model = {}
         for mfile in os.listdir(args.input_dir):
-            mfl = open(args.input_dir + '/' + mfile)
+            mfl = open(os.path.join(args.input_dir, mfile))
             train(mfl, args.lc, model)
             mfl.close()
         args.model.write(pickle.dumps(model))
