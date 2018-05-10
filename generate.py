@@ -17,19 +17,26 @@ def unirand(seq):
             return token
 
 
-def generate_sentence(model, t0, length):  # Генерирует модель
+def generate_length(model, t0, length):  # Генерирует модель
     phrase = ''
     t1 = '$'
     if length == 0:
         length = random.randint(1, 10)
-    for _ in range(length):
+    for cur_len in range(length):
         t0, t1 = t1, unirand(model[t0, t1])
-        if t1 == '$': break
+        if t1 == '$': return (cur_len, phrase.capitalize() + '\n')
         if t1 in ('.!?,;:') or t0 == '$':
             phrase += t1
         else:
             phrase += ' ' + t1
-    return phrase.capitalize() + '\n'
+    return (length, phrase.capitalize() + '\n')
+
+
+def generate_sentence(model, t0, length):
+    ans = generate_length(model, t0, length)
+    while ans[0] != length:
+        ans = generate_length(model, t0, length)
+    return ans[1]
 
 
 if __name__ == '__main__':  # Консольный интерфейс приложения
